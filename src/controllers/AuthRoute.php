@@ -34,17 +34,15 @@ $app->group('/auth', function (RouteCollectorProxy $group) {
         $user = new User($db);
         $userData = $user->findByEmail($email);
 
-        if (is_array($userData)) { // ✅ Vérifie si les données existent et sont sous forme de tableau
+        if (is_array($userData)) {
             if (password_verify($password, $userData['PASSWORD'])) {
-                session_start();
+            session_start();
              $_SESSION['user_id'] = $userData['IDUSER'];
-             
-
-            
-
+    
                 $response->getBody()->write(json_encode([
                     'message' => 'Login successful',
-                    'token' =>  $_SESSION['user_id']
+                    'token' =>  $_SESSION['user_id'],
+                    'data'=> $userData
                 ]));
             } else {
                 $response->getBody()->write(json_encode(['error' => 'Mot de passe incorrect']));
@@ -104,14 +102,71 @@ $app->group('/auth', function (RouteCollectorProxy $group) {
         return $response->withHeader('Content-Type', 'application/json');
     });
 
-    $group->get('/users', function (Request $request, Response $response) {
+    $group->get('/manga', function (Request $request, Response $response) {
         $db = new database();
         $user = new User($db);
-        $users = $user->getAll();
+        $users = $user->getManga();
+        
         $response->getBody()->write(json_encode($users));
         return $response->withHeader('Content-Type', 'application/json');
     });
 
+    $group->get('/anime', function (Request $request, Response $response) {
+
+        $db = new database();
+        $user = new User($db);
+        $queryParams = $request->getQueryParams();
+        $page = $queryParams['page'] ?? null;
+
+        $users = $user->getAnime($page);
+        
+        
+        $response->getBody()->write(json_encode($users));
+        return $response->withHeader('Content-Type', 'application/json');
+    });
+
+
+    $group->get('/movies', function (Request $request, Response $response) {
+
+        $db = new database();
+        $user = new User($db);
+        $queryParams = $request->getQueryParams();
+        $page = $queryParams['page'] ?? null;
+        
+        $users = $user->getMovies($page);
+        
+        
+        $response->getBody()->write(json_encode($users));
+        return $response->withHeader('Content-Type', 'application/json');
+    });
+
+    $group->post('/episodes', function (Request $request, Response $response) {
+        $data = $request->getParsedBody();
+        var_dump($data);
+        $title = $data['title'] ?? null; 
+    
+        if (!$title) {
+            $response->getBody()->write(json_encode(["error" => "Titre manquant"]));
+            return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
+        }
+    
+        $db = new database();
+        $user = new User($db);
+        $episodes = $user->getEpisodes($title);
+    
+        $response->getBody()->write(json_encode($episodes ?: ["error" => "Aucun épisode trouvé"]));
+        return $response->withStatus($episodes ? 200 : 404)->withHeader('Content-Type', 'application/json');
+    });
+    
+
+    $group->get('/random', function (Request $request, Response $response) {
+        $db = new database();
+        $user = new User($db);
+        $users = $user->getRandom();
+        
+        $response->getBody()->write(json_encode($users));
+        return $response->withHeader('Content-Type', 'application/json');
+    });
 
    /* $group->get('/profile/{id}', function (Request $request, Response $response, array $args) {
         $id = $args['id'];
