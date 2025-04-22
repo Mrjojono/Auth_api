@@ -124,7 +124,7 @@ class User
 
     {
         if ($pages == 0) {
-            $url = "https://animeapi.skin/trending?limit=10";
+            $url = "https://animeapi.skin/trending?page=1";
         } else {
             $url = "https://animeapi.skin/new?page=".$pages;
         }
